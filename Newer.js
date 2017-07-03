@@ -8,6 +8,7 @@
         //如果后面引用了大量的prototype，prototype因为是关键字，还不能被压缩
         jQuery.fn = jQuery.prototype = {
             constructor: jQuery,
+
             //这是一个构造函数
             init: function(selector, context){
                 var results;
@@ -50,7 +51,8 @@
                     this.length = 1;
                 }
                 else if(typeof selector === "function"){
-
+                    //debugger;
+                    getReady(selector);
                 }
 
                 return this;
@@ -377,13 +379,82 @@
 			  }
            }
         });
-
-
-
-
         return jQuery;
-    })();
+    })(),
+        readyList = [],
+        getReady = function(fn){
+            readyList.push(fn);
+        };
+
     window.jQuery = window.$ = jQuery;
+    //用一个闭包来为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
+    (function () {
+
+        var isReady = false,                                   //#A Start off assuming that we're not ready
+            contentLoadedHandler;
+
+        function ready() {                                     //#B Function that triggers the ready handler and records that fact
+            if (!isReady) {
+                $(document).triggerEvent("ready");			    // 触发一次
+                for(var i = 0; i < readyList.length; i++){
+                    readyList[i]();
+                }
+                isReady = true;                                 //DOM就绪了
+            }
+        }
+
+        if (document.readyState === "complete") {               //#C If the DOM is already ready by the time we get here, fire the handler
+            ready();
+        }
+
+        if (document.addEventListener) {                       //#D For W3C browsers, create a handler for the DOMContentLoaded event that fires off the ready handler and removes itself
+            contentLoadedHandler = function () {
+                document.removeEventListener(
+                    "DOMContentLoaded", contentLoadedHandler, false);
+                ready();
+            };
+
+            document.addEventListener(                             //#E Establish the handler
+                "DOMContentLoaded", contentLoadedHandler, false);
+
+        }
+
+        else if (document.attachEvent) {                        //#F For IE Event Model, create a handler that removes itself and fires the ready handler if the document readyState is complete
+            contentLoadedHandler = function () {
+                if (document.readyState === "complete") {
+                    document.detachEvent(
+                        "onreadystatechange", contentLoadedHandler);
+                    ready();
+                }
+            };
+
+            document.attachEvent(                                  //#G Establish the handler. Probably late, but is iframe-safe.
+                "onreadystatechange", contentLoadedHandler);
+
+            var toplevel = false;
+            try {
+                toplevel = window.frameElement == null;
+            }
+            catch (e) {
+            }
+
+            if (document.documentElement.doScroll && toplevel) {     //#H If not in an iframe try the scroll check
+                doScrollCheck();
+            }
+        }
+
+        function doScrollCheck() {                                  //#I Scroll check process for legacy IE
+            if (isReady) return;
+            try {
+                document.documentElement.doScroll("left");
+            }
+            catch (error) {
+                setTimeout(doScrollCheck, 1);
+                return;
+            }
+            ready();
+        }
+    })();
 })(window);
 
 
