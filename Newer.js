@@ -156,30 +156,31 @@
         jQuery.fn.extend({
             //elem：需要绑定处理程序的元素，type:事件的类型，fn：处理程序自身
             bind: function(type, fn) {
-                var contentArray = this[0];
+                var contentArray = this[0];     //DOM元素数组
                 for (var i = 0; i < this.length; i++) {
-                    elem = contentArray[i];
-
+                    elem = contentArray[i];     //逐个处理DOM元素
                     var data = jQuery.getData(elem);                           //elem相关的数据 ，并保存在data中
                     if (!data.handlers) data.handlers = {};             //创建handlers属性，用于存储各种类型事件的处理程序的数据块
                     if (!data.handlers[type])                           //为每一个事件类型创建一个数组
                         data.handlers[type] = [];
                     if (!fn.guid) fn.guid = nextGuid++;                 //为每个传入的函数都添加一个guid属性，用于标识处理函数，方便解绑
-                    fn.thisObj = elem;
                     data.handlers[type].push(fn);                       //相同事件类型的多个处理程序入同一个栈
                     if (!data.dispatcher) {                             //超级处理程序，称为调度器，如果不存在，则创建该调度器
                         data.disabled = false;                          //创建调度器时，置为false
-                        data.dispatcher = function (event) {            //该调度器在有事件发生时，触发绑定的函数
-                            //debugger;
-                            if (data.disabled) return;                  //检查是否禁用标记，如果有，则不触发绑定的函数
-                            event = jQuery.fixEvent(event);
-                            var handlers = data.handlers[event.type];   //获取相应事件类型的处理程序数组
-                            if (handlers) {
-                                for (var n = 0; n < handlers.length; n++) {   //调用注册到该事件类型下的每一个处理程序，并且是按顺序调用的
-                                    handlers[n].call(elem, event);            //并以当前元素为处理函数的上下文，并将Event对象作为唯一的参数进行传入
+                        data.dispatcher = (function(elem, event) {
+                            //要绑定当时的执行环境，elem和event
+                            return function (event) {            //该调度器在有事件发生时，触发绑定的函数
+                                // debugger;
+                                if (data.disabled) return;                  //检查是否禁用标记，如果有，则不触发绑定的函数
+                                event = jQuery.fixEvent(event);
+                                var handlers = data.handlers[event.type];   //获取相应事件类型的处理程序数组
+                                if (handlers) {
+                                    for (var n = 0; n < handlers.length; n++) {   //调用注册到该事件类型下的每一个处理程序，并且是按顺序调用的
+                                        handlers[n].call(elem, event);            //并以当前元素为处理函数的上下文，并将Event对象作为唯一的参数进行传入
+                                    }
                                 }
-                            }
-                        };
+                            };
+                        })(elem, event);
                     }
 
                     if (data.handlers[type].length == 1) {              //第一次为该事件类型创建处理程序
@@ -387,6 +388,7 @@
         };
 
     window.jQuery = window.$ = jQuery;
+
     //用一个闭包来为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
     (function () {
 
@@ -455,6 +457,7 @@
             ready();
         }
     })();
+
 })(window);
 
 

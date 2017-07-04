@@ -33,14 +33,15 @@
            },5000);
 
        }
-
+        //该点击事件会冒泡到document元素
        $("button").bind("click", function(){
            //arguments.callee.thisObj记录的是当前DOM元素，要把它转换为jQuery对象
-           var obj = $(arguments.callee.thisObj);
-           performAjaxOperation(obj);
+           var $obj = $(this);
+           performAjaxOperation($obj);
        });
 
        //绑定自定义事件,暂未实现ID选择功能，所以不能简化下面的语句
+
        $("body").bind("ajax-start", function(){
            document.getElementById('whirlyThing').style.display = 'inline-block';      //显示
        });
@@ -51,6 +52,7 @@
         /*
         演示利用冒泡技术将事件委托给祖先元素
          */
+
         $("table").bind("click", function(event){
             if(event.target.tagName.toLowerCase() == 'td'){
                 event.target.style.backgroundColor = 'yellow';
