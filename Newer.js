@@ -12,36 +12,9 @@
             //这是一个构造函数
             init: function(selector, context){
                 var results;
-                var find = function(selector, context) {
-                    //return 10;
-                    var root;
-                    //如果没有root,就从document开始查找
-                    root = context || document;
-                    //
-                    var parts = selector.split(" "),                //以空格分离选择器
-                        query = parts[0],                           //取出第一段结果
-                    //slice返回从第1项到最后一项组成的一个新数组
-                    //join把数组中的每个元素转换为字符串，并且用空格连接起来，形成一个String对象
-                        rest = parts.slice(1).join(" "),
-                        elems = root.getElementsByTagName(query),   //查找匹配第一段选择器的元素
-                        results = [];                               //初始化一个数组，用于保存查询结果
-
-                    for(var i = 0; i < elems.length; i++){
-                        if(rest){
-                            //递归查找，以elems[i]为上下文，以rest为选择器表达式
-                            //concat会创建一个原数组的副本，并将find的结果添加到results末尾,，这里又将这个副本的引用存回results
-                            results = results.concat(find(rest, elems[i]));
-                        }
-                        else{
-                            //将查找到的元素保存在results数组上
-                            results.push(elems[i]);
-                        }
-                    }
-                    return results;
-                };
 
                 if(typeof selector === "string"){
-                    results = find(selector, context);
+                    results = jQuery.find(selector, context);
                     //存储在属性0上
                     this[0] = results;
                     this.length = results.length;
@@ -64,10 +37,108 @@
             for(var p in ob){
                 if(ob.hasOwnProperty(p) && (!this.hasOwnProperty(p))){
                     this[p]=ob[p];
-                }
+            }
             }
         };
+        var readyList = [];
+        jQuery.extend({
+            find:function(selector, context) {
+                //return 10;
+                var root;
+                //如果没有root,就从document开始查找
+                root = context || document;
+                //
+                var parts = selector.split(" "),                //以空格分离选择器
+                    query = parts[0],                           //取出第一段结果
+                //slice返回从第1项到最后一项组成的一个新数组
+                //join把数组中的每个元素转换为字符串，并且用空格连接起来，形成一个String对象
+                    rest = parts.slice(1).join(" "),
+                    elems = root.getElementsByTagName(query),   //查找匹配第一段选择器的元素
+                    results = [];                               //初始化一个数组，用于保存查询结果
 
+                for(var i = 0; i < elems.length; i++){
+                    if(rest){
+                        //递归查找，以elems[i]为上下文，以rest为选择器表达式
+                        //concat会创建一个原数组的副本，并将find的结果添加到results末尾,，这里又将这个副本的引用存回results
+                        results = results.concat(jQuery.find(rest, elems[i]));
+                    }
+                    else{
+                        //将查找到的元素保存在results数组上
+                        results.push(elems[i]);
+                    }
+                }
+                return results;
+            },
+            getReady:function(fn){
+                readyList.push(fn);
+            },
+            watFormDomReady:function(){
+                var isReady = false,                                   //#A Start off assuming that we're not ready
+                    contentLoadedHandler;
+
+                function ready() {                                     //#B Function that triggers the ready handler and records that fact
+                    if (!isReady) {
+                        $(document).triggerEvent("ready");			    // 触发一次
+                        for(var i = 0; i < readyList.length; i++){
+                            readyList[i]();
+                        }
+                        isReady = true;                                 //DOM就绪了
+                    }
+                }
+
+                if (document.readyState === "complete") {               //#C If the DOM is already ready by the time we get here, fire the handler
+                    ready();
+                }
+
+                if (document.addEventListener) {                       //#D For W3C browsers, create a handler for the DOMContentLoaded event that fires off the ready handler and removes itself
+                    contentLoadedHandler = function () {
+                        document.removeEventListener(
+                            "DOMContentLoaded", contentLoadedHandler, false);
+                        ready();
+                    };
+
+                    document.addEventListener(                             //#E Establish the handler
+                        "DOMContentLoaded", contentLoadedHandler, false);
+
+                }
+
+                else if (document.attachEvent) {                        //#F For IE Event Model, create a handler that removes itself and fires the ready handler if the document readyState is complete
+                    contentLoadedHandler = function () {
+                        if (document.readyState === "complete") {
+                            document.detachEvent(
+                                "onreadystatechange", contentLoadedHandler);
+                            ready();
+                        }
+                    };
+
+                    document.attachEvent(                                  //#G Establish the handler. Probably late, but is iframe-safe.
+                        "onreadystatechange", contentLoadedHandler);
+
+                    var toplevel = false;
+                    try {
+                        toplevel = window.frameElement == null;
+                    }
+                    catch (e) {
+                    }
+
+                    if (document.documentElement.doScroll && toplevel) {     //#H If not in an iframe try the scroll check
+                        doScrollCheck();
+                    }
+                }
+
+                function doScrollCheck() {                                  //#I Scroll check process for legacy IE
+                    if (isReady) return;
+                    try {
+                        document.documentElement.doScroll("left");
+                    }
+                    catch (error) {
+                        setTimeout(doScrollCheck, 1);
+                        return;
+                    }
+                    ready();
+                }
+            }
+        });
         //用于扩展全局对象，所以不用jQuery.fn.extend
         jQuery.extend({
             isFunction: function () {
@@ -381,83 +452,11 @@
            }
         });
         return jQuery;
-    })(),
-        readyList = [],
-        getReady = function(fn){
-            readyList.push(fn);
-        };
-
-    window.jQuery = window.$ = jQuery;
-
-    //用一个闭包来为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
-    (function () {
-
-        var isReady = false,                                   //#A Start off assuming that we're not ready
-            contentLoadedHandler;
-
-        function ready() {                                     //#B Function that triggers the ready handler and records that fact
-            if (!isReady) {
-                $(document).triggerEvent("ready");			    // 触发一次
-                for(var i = 0; i < readyList.length; i++){
-                    readyList[i]();
-                }
-                isReady = true;                                 //DOM就绪了
-            }
-        }
-
-        if (document.readyState === "complete") {               //#C If the DOM is already ready by the time we get here, fire the handler
-            ready();
-        }
-
-        if (document.addEventListener) {                       //#D For W3C browsers, create a handler for the DOMContentLoaded event that fires off the ready handler and removes itself
-            contentLoadedHandler = function () {
-                document.removeEventListener(
-                    "DOMContentLoaded", contentLoadedHandler, false);
-                ready();
-            };
-
-            document.addEventListener(                             //#E Establish the handler
-                "DOMContentLoaded", contentLoadedHandler, false);
-
-        }
-
-        else if (document.attachEvent) {                        //#F For IE Event Model, create a handler that removes itself and fires the ready handler if the document readyState is complete
-            contentLoadedHandler = function () {
-                if (document.readyState === "complete") {
-                    document.detachEvent(
-                        "onreadystatechange", contentLoadedHandler);
-                    ready();
-                }
-            };
-
-            document.attachEvent(                                  //#G Establish the handler. Probably late, but is iframe-safe.
-                "onreadystatechange", contentLoadedHandler);
-
-            var toplevel = false;
-            try {
-                toplevel = window.frameElement == null;
-            }
-            catch (e) {
-            }
-
-            if (document.documentElement.doScroll && toplevel) {     //#H If not in an iframe try the scroll check
-                doScrollCheck();
-            }
-        }
-
-        function doScrollCheck() {                                  //#I Scroll check process for legacy IE
-            if (isReady) return;
-            try {
-                document.documentElement.doScroll("left");
-            }
-            catch (error) {
-                setTimeout(doScrollCheck, 1);
-                return;
-            }
-            ready();
-        }
     })();
 
+    window.jQuery = window.$ = jQuery;
+    //为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
+    jQuery.watFormDomReady();
 })(window);
 
 
