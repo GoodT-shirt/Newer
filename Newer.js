@@ -492,12 +492,11 @@
                 }
             }
         });
+         //为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
+    	jQuery.watFormDomReady();
         return jQuery;
     })();
-
     window.jQuery = window.$ = jQuery;
-    //为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
-    jQuery.watFormDomReady();
 })(window);
 
 
