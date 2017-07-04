@@ -451,6 +451,47 @@
 			  }
            }
         });
+        jQuery.extend({
+            //添加一个中央定时器
+            timers: {
+                timerID: 0,               //当前定时器ID
+                timers: [],               //当前定时器要执行的一系列处理函数
+
+                add: function(fn) {
+                    this.timers.push(fn);
+                },
+
+                start: function() {
+                    if (this.timerID) return;   //己经有一个中央定时器在运行
+                    //制造一个闭包，使runNext可以一直访问jQuery.timers
+                    (function(thisObj) {
+                        (function runNext() {
+                            if (thisObj.timers.length > 0) {     //还有处理函数没有执行完
+                                for (var i = 0; i < thisObj.timers.length; i++) {
+                                    if (thisObj.timers[i]() === false) { //处理程序执行时返回false
+                                        thisObj.timers.splice(i, 1);      //将该处理程序从数组中移除
+                                        i--;
+                                    }
+                                }
+                                //再一次调度,timerID的值会变，但不会是0
+                                //这里的调度使得jQuery.timers.start();后面的程序有机会执行
+                                thisObj.timerID = setTimeout(runNext, 0);
+                            }
+                            else{
+                                console.log("%d,%d", thisObj.timers.length, thisObj.timerID);
+                                thisObj.stop();
+                                console.log("%d,%d", thisObj.timers.length, thisObj.timerID);
+                            }
+                        })();
+                    })(this);
+                },
+
+                stop: function() {                                             //#5
+                    clearTimeout(this.timerID);
+                    this.timerID = 0;
+                }
+            }
+        });
         return jQuery;
     })();
 
