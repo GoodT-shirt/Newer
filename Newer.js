@@ -238,9 +238,9 @@
                     data.handlers[type].push(fn);                       //相同事件类型的多个处理程序入同一个栈
                     if (!data.dispatcher) {                             //超级处理程序，称为调度器，如果不存在，则创建该调度器
                         data.disabled = false;                          //创建调度器时，置为false
-                        data.dispatcher = (function(elem, event) {
-                            //要绑定当时的执行环境，elem和event
-                            return function (event) {            //该调度器在有事件发生时，触发绑定的函数
+                        data.dispatcher = (function(elem) {
+                            //要绑定当时的执行环境elem，
+                            return function (event) {            		//该调度器在有事件发生时，触发绑定的函数.注意，该event对象是事件发生时由浏览器传入的
                                 // debugger;
                                 if (data.disabled) return;                  //检查是否禁用标记，如果有，则不触发绑定的函数
                                 event = jQuery.fixEvent(event);
@@ -251,14 +251,18 @@
                                     }
                                 }
                             };
-                        })(elem, event);
+                        })(elem);
                     }
 
                     if (data.handlers[type].length == 1) {              //第一次为该事件类型创建处理程序
-                        if (document.addEventListener) {
-                            elem.addEventListener(type, data.dispatcher, false);    //这样dispatcher即成为该元素的事件委托函数，事件发生时真正调用的是该委托函数
+                        if (document.addEventListener) {				//DOM MODEL
+                        	//这样dispatcher即成为该元素的事件委托函数，事件发生时真正调用的
+                        	//是该委托函数，第三个参数false，说明使用冒泡处理程序
+                            elem.addEventListener(type, data.dispatcher, false);    
                         }
-                        else if (document.attachEvent) {
+                        else if (document.attachEvent) {				//IE MODEL
+                        	//IE MODEL给绑定的处理程序设置了错误的上下文(设成了window)，而不是事件目标元素
+                        	//但上面的data.dispatcher己经修正了该问题
                             elem.attachEvent("on" + type, data.dispatcher);
                         }
                     }
@@ -320,10 +324,10 @@
 
                     delete data.handlers[type];                     //删除该事件类型关联的处理程序数组
                     //该事件类型的委托程序也没有必要存在了
-                    if (document.removeEventListener) {
+                    if (document.removeEventListener) {				//支持DOM MODEL
                         elem.removeEventListener(type, data.dispatcher, false);
                     }
-                    else if (document.detachEvent) {
+                    else if (document.detachEvent) {				//支持IE MODEL
                         elem.detachEvent("on" + type, data.dispatcher);
                     }
                 }
@@ -347,36 +351,35 @@
                 function returnFalse() {
                     return false;
                 }
-
-                if (!event || !event.stopPropagation) {                           //#2
-                    var old = event || window.event;
-
-                    // Clone the old object so that we can modify the values
+                //如果event实例不存在，或者存在，但是缺少标准stopPropagation属性，那么我们就认
+                //为需要对其修复。首先获取event对象的副本
+                if (!event || !event.stopPropagation) {                           
+                    var old = event || window.event;		//该副本可能是传入的event对象(DOM MODEL)，也可能是全局上下文上的event对象(IE MODEL)
+                    //创建一个空对象作为修复后的event对象
                     event = {};
-
-                    for (var prop in old) {                                         //#3
+                    //将old事件对象中的所有属性都赋值到新对象上
+                    for (var prop in old) {                                         
                         event[prop] = old[prop];
                     }
-
-                    // The event occurred on this element
+                    // 事件所在的元素，IE MODEL中，原始源保存在srcElement中
                     if (!event.target) {
                         event.target = event.srcElement || document;
                     }
 
-                    // Handle which other element the event is related to
+                    //事件触发时的关联元素, mouseover事件发生时会有一个关联元素toElement, mouseout事件发生时会有关联元素fromElement
                     event.relatedTarget = event.fromElement === event.target ?
                         event.toElement :
                         event.fromElement;
 
-                    // Stop the default browser action
+                    // 阻止默认浏览器行为，该属性在IE MODEL中不存在
                     event.preventDefault = function () {
-                        event.returnValue = false;
-                        event.isDefaultPrevented = returnTrue;
+                        event.returnValue = false;		//在IE中要阻止默认行为的发生，需要将returnValue设为false
+                        event.isDefaultPrevented = returnTrue;		//下面又置为returnFalse
                     };
 
                     event.isDefaultPrevented = returnFalse;
 
-                    // Stop the event from bubbling
+                    // 阻止事件冒泡，该属性在IE MODEL中不存在
                     event.stopPropagation = function () {
                         event.cancelBubble = true;
                         event.isPropagationStopped = returnTrue;
@@ -384,7 +387,7 @@
 
                     event.isPropagationStopped = returnFalse;
 
-                    // Stop the event from bubbling and executing other handlers
+                    // 阻止事件冒泡并执行其他处理程序
                     event.stopImmediatePropagation = function () {
                         this.isImmediatePropagationStopped = returnTrue;
                         this.stopPropagation();
@@ -392,10 +395,12 @@
 
                     event.isImmediatePropagationStopped = returnFalse;
 
-                    // Handle mouse position
+                    //处理鼠标位置
                     if (event.clientX != null) {
                         var doc = document.documentElement, body = document.body;
-
+                        //pageX,pageY提供鼠标相对于整个文档的位置，这两个属性在IE MODEL中不存在，但可以从其他信息中获取
+                        //在IE中，clientX/Y提供鼠标相对于窗口的位置，而scrollTop/Left则给出了文档滚动的位置
+                        //并且clientTop/Left给出了文档的偏移量。
                         event.pageX = event.clientX +
                             (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
                             (doc && doc.clientLeft || body && body.clientLeft || 0);
@@ -404,11 +409,10 @@
                             (doc && doc.clientTop || body && body.clientTop || 0);
                     }
 
-                    // Handle key presses
+                    // 键盘事件时所按按键的键盘码，IE MODEL中可通过charCode和keyCode属性获取
                     event.which = event.charCode || event.keyCode;
 
-                    // Fix button for mouse clicks:
-                    // 0 == left; 1 == middle; 2 == right
+                    // 鼠标事件发生时，用户单击的鼠标按键。DOM MODEL的左中右是0, 1, 2，而IE MODEL的左中右是1,2,4
                     if (event.button != null) {
                         event.button = (event.button & 1 ? 0 :
                             (event.button & 4 ? 1 :
