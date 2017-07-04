@@ -496,6 +496,15 @@
                 }
             }
         });
+        jQuery.extend({
+        	convert: function(html){
+        		var tags = /^(abbr|br|col|img|input|link|meta|param|hr|area|embed)$/i;
+
+		        return html.replace(/(<(\w+)[^>]*?)\/>/g, function (all, front, tag) {
+													          return tags.test(tag) ? all: front + "></" + tag + ">";
+		        });
+        	}
+        });
          //为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
     	jQuery.watFormDomReady();
         return jQuery;

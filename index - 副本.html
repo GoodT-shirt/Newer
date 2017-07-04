@@ -3,30 +3,19 @@
 <head>
 	<title></title>
 	<style type="text/css">
-		#box { position: absolute; background-color: #00bfff; border:  2px solid #00008b; padding: 8px; }
 	</style>
 	<script src="Newer.js"></script>
 </head>
 <body>
 
-	<div id="box">Hello!</div>
+
 	<script type="text/javascript">
-		//这个box是一个全局的DOM元素
-		var box = document.getElementById("box"), x = 0, y = 20;
-		//debugger;
-		jQuery.timers.add(function() {
-			box.style.left = x + "px";
-			if (++x > 50) return false;
-		});
-
-		jQuery.timers.add(function() {
-			box.style.top = y + "px";
-			y += 2;
-			if (y > 120) return false;
-		});
-
-		jQuery.timers.start();
-		
+		if(jQuery.convert("<a/>") === "<a></a>"){
+			console.log("Check anchor conversion.")
+		}
+		if(jQuery.convert("<hr/>") === "<hr/>"){
+			console.log("Check hr conversion.");
+		}
 	</script>
 </body>
 </html>
