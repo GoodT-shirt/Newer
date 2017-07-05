@@ -25,7 +25,7 @@
                 }
                 else if(typeof selector === "function"){
                     //debugger;
-                    getReady(selector);
+                    jQuery.getReady(selector);
                 }
 
                 return this;
@@ -552,13 +552,13 @@
 	            	//创建一个文档片段
 	                fragment = doc.createDocumentFragment(),
 	                //args是html字符串，doc是调用createElement函数的对象,生成的DOM节点存放在fragment中
-	                scripts = getNodes(args, doc, fragment),
+	                scripts = jQuery.getNodes(args, doc, fragment),
 	                first = fragment.firstChild;
 		            //fragment里非空
 		            if (first) {
 		              for (var i = 0; elems[i]; i++) {
 		              	//callback函数中有用到this对象，所以使用call方式调用，调用之前先用root函数获取插入位置(插入的所在元素，即其父元素)
-		                callback.call(root(elems[i], first),
+		                callback.call(jQuery.root(elems[i], first),
 		                    i > 0 ? fragment.cloneNode(true) : fragment);	//对片段进行克隆
 		              }
 		            }

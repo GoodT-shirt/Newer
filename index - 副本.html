@@ -7,16 +7,24 @@
 	<script src="Newer.js"></script>
 </head>
 <body>
-
-
+	<div id="test"><b>Hello</b>, I'm a ninja!</div>
+    <div id="test2"></div>
 	<script type="text/javascript">
-		debugger;
-		if(jQuery.getNodes("<td>test</td><td>test2</td>").length === 2){
-			console.log("Get two nodes back from the method.")
-		}
-		if(jQuery.getNodes("<td>test</td>")[0].nodeName === "TD"){
-			console.log("Verify that we're getting the right node.`");
-		}
+		
+		$(function(){
+			debugger;
+			//需要插入DOM片段的<div>
+			var divs = document.getElementsByTagName("div");
+			//将HTML字符串代表的DOM元素插入到这些DIV中
+	        jQuery.insert(divs, "<b>Name:</b>", function(fragment) {
+	          this.appendChild(fragment);
+	        });
+
+	        jQuery.insert(divs, "<span>First</span> <span>Last</span>",
+	               function(fragment) {
+	                  this.parentNode.insertBefore(fragment, this);
+	                });
+		});
 	</script>
 </body>
 </html>
