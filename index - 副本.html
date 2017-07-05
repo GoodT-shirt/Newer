@@ -10,11 +10,12 @@
 
 
 	<script type="text/javascript">
-		if(jQuery.convert("<a/>") === "<a></a>"){
-			console.log("Check anchor conversion.")
+		debugger;
+		if(jQuery.getNodes("<td>test</td><td>test2</td>").length === 2){
+			console.log("Get two nodes back from the method.")
 		}
-		if(jQuery.convert("<hr/>") === "<hr/>"){
-			console.log("Check hr conversion.");
+		if(jQuery.getNodes("<td>test</td>")[0].nodeName === "TD"){
+			console.log("Verify that we're getting the right node.`");
 		}
 	</script>
 </body>

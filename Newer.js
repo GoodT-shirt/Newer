@@ -497,14 +497,85 @@
             }
         });
         jQuery.extend({
+        	//预解析html字符串，将<table/>这样的自关闭元素转换为<table></table>
         	convert: function(html){
         		var tags = /^(abbr|br|col|img|input|link|meta|param|hr|area|embed)$/i;
 
 		        return html.replace(/(<(\w+)[^>]*?)\/>/g, function (all, front, tag) {
 													          return tags.test(tag) ? all: front + "></" + tag + ">";
 		        });
-        	}
+        	},
+        	//从html字符串生成一个DOM列表
+        	getNodes: function(htmlString,doc, fragment) {
+        		//元素类型和特殊父容器之间的映射。每个映射都有3个值：节点深度，父元素开启标签和父元素关闭标签
+		        var map = {                                                     
+		          "<td":[3, "<table><tbody><tr>", "</tr></tbody></table>"],
+		          "<th":[3, "<table><tbody><tr>", "</tr></tbody></table>"],
+		          "<tr":[2, "<table><thead>", "</thead></table>"],
+		          "<option":[1, "<select multiple='multiple'>", "</select>"],
+		          "<optgroup":[1, "<select multiple='multiple'>", "</select>"],
+		          "<legend":[1, "<fieldset>", "</fieldset>"],
+		          "<thead":[1, "<table>", "</table>"],
+		          "<tbody":[1, "<table>", "</table>"],
+		          "<tfoot":[1, "<table>", "</table>"],
+		          "<colgroup":[1, "<table>", "</table>"],
+		          "<caption":[1, "<table>", "</table>"],
+		          "<col":[2, "<table><tbody></tbody><colgroup>", "</colgroup></table>"],
+		          "<link":[3, "<div></div><div>", "</div>"]
+		        };
+		        //使用正则表达式匹配开始尖括号和要注入的元素标签名称，如<td
+		        var tagName = htmlString.match(/<\w+/), //#2
+		            mapEntry = tagName ? map[tagName[0]] : null;                
+		        //如果匹配了映射中的内容就获取该条目 ，否则就构建一个深度为0的虚假空父标签
+		        if (!mapEntry) mapEntry = [0, "", ""];                          
+		        //创建一个<div>元素
+		        var div = (doc || document).createElement("div");               
+		        //将要注入的新标签包装在来自映射的父元素中，然后将其作为新创建<div>的innterHTML内容进行注入
+		        div.innerHTML = mapEntry[1] + htmlString + mapEntry[2];         
+		        //循环结束后，最终的div是新创建元素的父元素
+		        while (mapEntry[0]--) div = div.lastChild;                      
+
+		        //将div下的子节点列表添加到fragment中
+		        if (fragment) {
+		          while (div.firstChild) {
+		            fragment.appendChild(div.firstChild);
+		          }
+		        }
+
+		        //返回新创建的元素（或元素集合）
+		        return div.childNodes;                                          
+	      },
+	      //elems是一个集合，应该是一个类数组对象
+	      insert: function(elems, args, callback) {
+	          if (elems.length) {
+	            var doc = elems[0].ownerDocument || elems[0],
+	            	//创建一个文档片段
+	                fragment = doc.createDocumentFragment(),
+	                //args是html字符串，doc是调用createElement函数的对象,生成的DOM节点存放在fragment中
+	                scripts = getNodes(args, doc, fragment),
+	                first = fragment.firstChild;
+		            //fragment里非空
+		            if (first) {
+		              for (var i = 0; elems[i]; i++) {
+		              	//callback函数中有用到this对象，所以使用call方式调用，调用之前先用root函数获取插入位置(插入的所在元素，即其父元素)
+		                callback.call(root(elems[i], first),
+		                    i > 0 ? fragment.cloneNode(true) : fragment);	//对片段进行克隆
+		              }
+		            }
+		          }
+	        },
+	      //要将cur插入到elem中
+	      root:function(elem, cur) {
+			  return elem.nodeName.toLowerCase() === "table" &&//如果elem是<table>
+			      cur.nodeName.toLowerCase() === "tr" ?//cur是<tr>
+			      (elem.getElementsByTagName("tbody")[0] || elem.appendChild(elem.ownerDocument.createElement("tbody")))//则返回<tbody>，表示实际是要将<tr>插入到<tbody>中
+			      : elem;	//否则就是要插入到elem元素中
+		  }
         });
+
+
+
+
          //为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
     	jQuery.watFormDomReady();
         return jQuery;
