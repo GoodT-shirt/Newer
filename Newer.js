@@ -619,6 +619,47 @@
      
         });
 
+		jQuery.extend({
+			createCanvas:function(cont,elem){
+				var canvas = document.createElement('canvas'), context = canvas.getContext('2d'), elem = elem || document.body, cont = cont || {};
+				canvas.id = 'canvas';
+				if(cont.font)
+					context.font = cont.font;
+				else
+					context.font = '38pt Arial';
+
+				if(cont.fillStyle)
+					context.fillStyle = cont.fillStyle;
+				else
+					context.fillStyle = 'cornflowerblue';
+
+				if(cont.strokeStyle)
+					context.strokeStyle = cont.strokeStyle;
+				else
+					context.strokeStyle = 'blue';
+				if(cont.width)
+					canvas.width = cont.width;
+				else 
+					canvas.width = 600;
+				if(cont.height)
+					canvas.height = cont.height;
+				else
+					canvas.height = 300;
+
+				if(!cont.text)
+					cont.text = 'Hello Canvas';
+
+				if(!cont.textX)
+					cont.textX  = canvas.width / 2 - 150;
+				if(!cont.textY)
+					cont.textY = canvas.height / 2 + 15;
+				
+				context.fillText(cont.text, cont.textX, cont.textY);
+				context.strokeText(cont.text, cont.textX, cont.textY);
+				elem.appendChild(canvas);
+			}
+		});
+
 
 
 
