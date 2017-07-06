@@ -536,6 +536,8 @@
 		        while (mapEntry[0]--) div = div.lastChild;                      
 
 		        //将div下的子节点列表添加到fragment中
+		        //任何DOM节点都不能同时出现在文档中的多个位置
+		        //document对象是window对象的一个属性,高程P253页
 		        if (fragment) {
 		          while (div.firstChild) {
 		            fragment.appendChild(div.firstChild);
