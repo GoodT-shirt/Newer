@@ -593,7 +593,30 @@
 		  		script.text = code;		//抛出异常，肯定是IE，IE可以使用text属性
 		  	}
 		  	elem.appendChild(script);
-		  }
+		  },
+		  //实时向页面中添加样式，马上能看到
+		  loadStyleString: function(css){
+            var style = document.createElement("style");
+            style.type = "text/css";
+            try{
+                style.appendChild(document.createTextNode(css));
+            } catch (ex){
+                style.styleSheet.cssText = css;
+            }
+            var head = document.getElementsByTagName("head")[0];
+            head.appendChild(style);
+           },
+           //由于要下载，所以会比较慢
+          loadStyles:function(url){
+           	 var link = document.createElement("link");
+           	 link.rel = "styleSheet";
+           	 link.type = "text/css";
+           	 link.href = url;
+           	 var head = document.getElementsByTagName("head")[0];
+           	 head.appendChild(link);
+          }
+    	
+     
         });
 
 
