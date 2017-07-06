@@ -14,9 +14,14 @@
         <p>abc</p>
     </div>
      <script type="text/javascript">
-         debugger;
-    	$("div p").bind("click",function(){alert("good")});
-
+        /*
+          在将<script>添加到DOM树之后，开始下载src指定的脚本，但不会等待脚本执行完成
+        */
+        jQuery.loadScript("say.js",function(){
+            say();          //执行say.js中的say函数
+        });                                   
+    	jQuery.loadScriptString("function sayHi(){alert('hi');}");     //先在body最后面添加一个<script>标签及其脚本
+        sayHi();                                                       //再执行.执行完这个，弹出对话框并按确定后，才渲染显示abc
     </script>
 </body>
 </html>

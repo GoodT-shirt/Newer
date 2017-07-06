@@ -572,6 +572,27 @@
 			      cur.nodeName.toLowerCase() === "tr" ?//cur是<tr>
 			      (elem.getElementsByTagName("tbody")[0] || elem.appendChild(elem.ownerDocument.createElement("tbody")))//则返回<tbody>，表示实际是要将<tr>插入到<tbody>中
 			      : elem;	//否则就是要插入到elem元素中
+		  },
+		  loadScript: function(url, callback,elem){
+		  	var script = document.createElement("script"), elem = elem || document.body;
+		  	script.onload = function(){
+		  		if(callback){
+		  			callback();
+		  		}
+		  	};
+		  	script.type = "text/javascript";
+		  	script.src = url;
+		  	elem.appendChild(script);
+		  },
+		  loadScriptString: function(code, elem){
+		  	var script = document.createElement("script"), elem = elem || document.body;
+		  	script.type = "text/javascript";
+		  	try{
+		  		script.appendChild(document.createTextNode(code));	//标准的DOM文本节点方法，但IE将<script>视为一个特殊元素，不允许DOM访问其子节点
+		  	}catch(ex){
+		  		script.text = code;		//抛出异常，肯定是IE，IE可以使用text属性
+		  	}
+		  	elem.appendChild(script);
 		  }
         });
 
