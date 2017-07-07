@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+    </style>
+
+    <script src="Newer.js"></script>
+    <style type="text/css">
+        #whirlyThing { display: none; };
+    </style>
+</head>
+
+<body>
+    <div>abc</div>
+    <button type="button" id="clickMe">Start</button>              <!--4-->
+    <img id="whirlyThing" src="whirly-thing.gif">                  <!--5-->
+    <table id="someTable" border="1">
+        <tr>
+            <td>1</td>
+            <td>2</td>
+            <td>3</td>
+        </tr>
+    </table>
+    <script>
+        /*
+        演示绑定自定义事件处理程序和触发自定义事件
+         */
+       function performAjaxOperation(target) {
+           target.triggerEvent('ajax-start');           //触发自定义事件
+           window.setTimeout(function(){
+               target.triggerEvent('ajax-complete')
+           },5000);
+
+       }
+
+        //该点击事件会冒泡到document元素
+       $("button").bind("click", function(){
+           //arguments.callee.thisObj记录的是当前DOM元素，要把它转换为jQuery对象
+            debugger;
+           var $obj = $(this);
+           performAjaxOperation($obj);
+       });
+
+       //绑定自定义事件,暂未实现ID选择功能，所以不能简化下面的语句
+
+       $("body").bind("ajax-start", function(){
+       		debugger;
+           document.getElementById('whirlyThing').style.display = 'inline-block';      //显示
+       });
+
+       $("body").bind("ajax-complete", function(){
+           document.getElementById('whirlyThing').style.display = 'none';               //隐藏
+       });
+        /*
+        演示利用冒泡技术将事件委托给祖先元素
+         */
+
+        $("table").bind("click", function(event){
+            if(event.target.tagName.toLowerCase() == 'td'){
+                event.target.style.backgroundColor = 'yellow';
+            }
+        });
+
+    </script>
+</body>
+</html>

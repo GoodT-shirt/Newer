@@ -671,6 +671,170 @@
 			}
 		});
 
+        jQuery.extend({
+            matchAllChar:function(str){
+                return /.*/.exec(str)[0];       //只能匹配到换行符为止，即只返回换行符前面的字符串
+                return /[\S\s]*/.exec(str)[0];  //会返回字符串str自身，无论str是否包含换行符，记住没有？操作符，匹配操作是贪婪的，即会返回匹配的整个字符串
+                return /(?:.|\s)*/.exec(str)[0];//(.)匹配除换行符以外的所有内容，\s所有是空白的字符包括换行符，结果是包含换行符在内的所有字符，是两个集合的并集,(?:)的作用是使该圆括号不要进行捕获，以提升性能 
+            },
+            matchWholeUnicode:function(text){
+                /*
+                \w：匹配任意单词字符
+                \u0080-\uFFFF
+                _-：匹配下划线和中横线
+                */
+                var matchAll = /[\w\u0080-\uFFFF_-]+/;   
+                text.match(matchAll);
+            },
+            //匹配转义字符
+            /*
+             var tests = [                                           //#2
+                    "formUpdate",
+                    "form\\.update\\.whatever",
+                    "form\\:update",
+                    "\\f\\o\\r\\m\\u\\p\\d\\a\\t\\e",
+                    "\\\\\\\\",
+                    "form:update"       //不能匹配，因为:前面没有反斜杠
+                  ];
+            */
+            matchEscapeChar:function(test){
+                /*
+                ^:匹配开头
+                (\w):匹配一个单词字符
+                (\\.):匹配一个反斜杠后跟随任意字符（可以是另外一个反斜杠）
+                */
+                  var pattern = /^((\w+)|(\\.))+$/;                       
+                  if(pattern.test(test[n])) return true;
+                  else return false;
+            },
+            /*
+            |操作符左边是^\s+：匹配开始的至少一个空格
+            |操作符右边是\s+$:匹配结束的至少一个空格
+            */
+            trim:function(str){
+                 return (str||"").replace(/^\s+|\s+$/g, ""); 
+            },
+            /*
+            假使传入的参数为border-bottom-width
+            则upper会被调用两次，第一欠传入的是-b,b,第二次传入的是-w,w
+            */
+            makeCamel:function(str){
+                //all是匹配正则的完整字符串,letter是一个捕获
+                var upper =  function(all,letter){
+                    return letter.toUpperCase(); 
+                }  
+                str.replace(/-(\w)/g,upper) 
+            },
+            /*
+            假设source为"foo=1&foo=2&blah=a&blah=b&foo=3"
+            则function会被调用五次，full为别是：foo=1,foo=2,blah=a,blah=b,foo=3
+            而key分别是foo,foo,blah,blah,foo
+            value分别是：1,2,a,b,3
+            */
+            compress:function(source){
+                var keys = {};                                     
+                var num = 0; 
+                /*
+                可见，括号（）有两个作用：分组，捕获
+                ([^=&]+):匹配除了=和&(既不能有=也不能有&)之外的至少一个字符，即键
+                ([^&]*):匹配除&之外的任意个字符(可以没有)
+                */
+                source.replace(/([^=&]+)=([^&]*)/g,
+                            function(full, key, value) {                     
+                                keys[key] =(keys[key] ? keys[key] + "," : "") + value;
+                                return "";
+                                });
+
+                var result = [];                                   
+                for (var key in keys) {                            
+                    result.push(key + "=" + keys[key]);              
+                }                                                 
+
+                return result.join("&");     
+            },
+            getOpacity:function(elem){
+                var filter = elem.style.filter;
+                return filter ?                                                     //存在filter属性
+                filter.indexOf("opacity=") >= 0 ?   //且找到了"opacity="
+                    (parseFloat(filter.match(/opacity=([^)]+)/)[1]) / 100) + "" :
+                    "" :
+                elem.style.opacity;
+                /*
+                ([^)]+)：匹配除了)的任意个字符, /100后将转换为小数
+                */
+            },
+            findClassInElements:function(className, type){
+                var elems = document.getElementsByTagName(type || "*");
+                /*
+                /(^|\s)className(\s|$)/
+                看正则要看整体，不然很容易迷糊
+                */
+                var regex = new RegExp("(^|\\s)" + className + "(\\s|$)");
+                var results = [];                                      //#4
+                for (var i = 0, length = elems.length; i < length; i++){
+                    if (regex.test(elems[i].className)) {                //能匹配指定className
+                        results.push(elems[i]);                          //DOM元素入栈
+                    }
+                }
+                return results;
+            },
+            findTagInLocalWithMatch:function(str){
+                var all = str.match(/<(\/?)(\w+)([^>]*?)>/);    
+                var results=[];     //创建一个数组，是在全局堆内存中
+
+                for(var i = 0; i < all.length; i++){
+                    results.push(all[i]);       //all[0]是与整个模式匹配的字符串，all[1~]是捕获结果
+                }
+                return results;
+            },
+            findTagInLocalWithMatch:function(str){
+                var all = str.match(/<(\/?)(\w+)([^>]*?)>/g);    
+                var results=[];
+
+                for(var i = 0; i < all.length; i++){
+                    results.push(all[i]);       //和exec不同，全局模式时，一次性返回所有匹配结果（不是捕获结果）
+                }
+                return results;
+            },
+            findTagInGlobalWithExec:function(str){
+                /*
+                两边的<>表示它匹配的是开始标签(连同里面的属性)或结束标签
+                (\/?)结合前面的<：匹配<或</
+                (\w+):匹配任意个字母
+                ([^>]*?)：匹配除了>的任意个字符，包括空格
+                */
+                  var pattern = /<(\/?)(\w+)([^>]*?)>/g, match;
+                  var num = 0;
+                  var results=[];
+
+                  while ((match = pattern.exec(str)) !== null) {                  //#1
+                        results.push(match[0]);     //match[0]是与整个模式匹配的字符串,match[1~]是捕获结果
+                  }
+
+             },
+                        
+            //匹配整个标签，包括其中的内容，如<b class="hello">Hello</b>
+            matchWholeTag:function(str){
+                /*
+                首先看头和尾，分别是<和>，其次看分组和引用，有3个分组和1个引用
+                (\w+)：匹配任意单词，可以有下划线，如_a,_abc,A都能匹配
+                ([^>]*)：匹配除了>的任意个字符，自然包括空格
+                (.*)：匹配开始标签和结束标签的内容
+                <\/\1>：匹配和开始标签配对的结束标签
+                */
+                var pattern = /<(\w+)([^>]*)>(.*?)<\/\1>/g; 
+                var match = pattern.exec(str);
+                /*
+                match[0]:与整个模式匹配的字符串
+                match[1]:与第一个捕获组匹配的字符串
+                match[2]:与第二个捕获组匹配的字符串,依次类推
+                在有全局标志g的情况下，每次调用都返回下一个匹配及其捕获内容，例如<b>Hello</b> <i>world!</i>
+                需要调用两次exec，才能分别获取<b>Hello</b>和<i>world!</i>
+                */
+                return match;
+            }
+        });
+
 
 
 
