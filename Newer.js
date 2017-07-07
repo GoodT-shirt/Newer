@@ -14,23 +14,22 @@
             init: function(selector, context){
                 var results;
 
-                /*this.length = 0;
+                this.length = 0;
                 this.add = function(elem){
                 	Array.prototype.push.call(this, elem);
-                };*/
+                };
 
                 if(typeof selector === "string"){		//选择器表达式字符串
                     results = jQuery.find(selector, context);
-                    /*for(var i = 0; i < results.length; i++){
-                    	this.add(results[i]);
-                    }*/
-                    //存储在属性0上
-                    this[0] = results;
-                    this.length = results.length;
+                    for(var i = 0; i < results.length; i++){
+                    	this.add(results[i]);		//会自动增加length
+                    }
                 }
                 else if(typeof selector === "object"){  //DOM对象
+                	/*
                     this[0] = [selector];       //第0个元素是一个数组，数组里的每一个元素都是DOM元素（对象）
-                    this.length = 1;
+                    this.length = 1;*/
+                    this.add(selector);
                 }
                 else if(typeof selector === "function"){//函数
                     //debugger;
@@ -236,9 +235,8 @@
         jQuery.fn.extend({
             //elem：需要绑定处理程序的元素，type:事件的类型，fn：处理程序自身
             bind: function(type, fn) {
-                var contentArray = this[0];     //DOM元素数组
                 for (var i = 0; i < this.length; i++) {
-                    elem = contentArray[i];     //逐个处理DOM元素
+                    elem = this[i];     //逐个处理DOM元素
                     var data = jQuery.getData(elem);                           //elem相关的数据 ，并保存在data中
                     if (!data.handlers) data.handlers = {};             //创建handlers属性，用于存储各种类型事件的处理程序的数据块
                     if (!data.handlers[type])                           //为每一个事件类型创建一个数组
@@ -435,33 +433,34 @@
         //一般来说是触发单个元素
         jQuery.fn.extend({
             triggerEvent: function(event){
-              var contentArray = this[0];
-              elem = contentArray[0];								//
-			  var elemData = jQuery.getData(elem),                  //获取元素数据
-			  parent = elem.parentNode || elem.ownerDocument;		//获取元素的父元素
-			  if (typeof event === "string") {                      //如果传入的event名称是一个字符串(还可以是一个事件对象)
-			    event = { type:event, target:elem };				//就为此创建一个event对象
-			  }
-			  event = jQuery.fixEvent(event);                       //对event属性进行规范化
-			  if (elemData.dispatcher) {                            //如果传入的元素有事件调度器，则执行它
-			    elemData.dispatcher.call(elem, event);				
-			  }
-			  if (parent && !event.isPropagationStopped()) {        //如果有父元素，而且没有显式停止冒泡	
-			  	var obj ={
-			  		0: [parent]
-			  	};		
-			  	//debugger;
-                  //triggerEvent.call(obj, event);
-                  arguments.callee.call(obj, event);					//则在父元素上触发该事件（递归调用）
-			  }
-			  else if (!parent && !event.isDefaultPrevented()) {    //如果DOM到顶了(到达document元素)，并且没有禁用默认行为
-			    var targetData = jQuery.getData(event.target);
-			    if (event.target[event.type]) {                     //判断元素有没有该事件的默认行为
-			      targetData.disabled = true;                       //临时禁用事件调度器，因为在上面己经执行了调度器,不想再重复执行了
-			      event.target[event.type]();                       //执行默认行为，可能引发调度器被调用
-			      targetData.disabled = false;                      //重新打开调度器
-			    }
-			  }
+              for(var i = 0; i < this.length; i++){
+	              //var contentArray = this[0];
+	              //elem = contentArray[0];		
+	              elem = this[i];						
+				  var elemData = jQuery.getData(elem),                  //获取元素数据
+				  parent = elem.parentNode || elem.ownerDocument;		//获取元素的父元素
+				  if (typeof event === "string") {                      //如果传入的event名称是一个字符串(还可以是一个事件对象)
+				    event = { type:event, target:elem };				//就为此创建一个event对象
+				  }
+				  event = jQuery.fixEvent(event);                       //对event属性进行规范化
+				  if (elemData.dispatcher) {                            //如果传入的元素有事件调度器，则执行它
+				    elemData.dispatcher.call(elem, event);				
+				  }
+				  if (parent && !event.isPropagationStopped()) {        //如果有父元素，而且没有显式停止冒泡	
+				  	var obj ={
+				  		0: [parent]
+				  	};		
+				  	 $(parent).triggerEvent(event);						//则在父元素上触发该事件
+				  }
+				  else if (!parent && !event.isDefaultPrevented()) {    //如果DOM到顶了(到达document元素)，并且没有禁用默认行为
+				    var targetData = jQuery.getData(event.target);
+				    if (event.target[event.type]) {                     //判断元素有没有该事件的默认行为
+				      targetData.disabled = true;                       //临时禁用事件调度器，因为在上面己经执行了调度器,不想再重复执行了
+				      event.target[event.type]();                       //执行默认行为，可能引发调度器被调用
+				      targetData.disabled = false;                      //重新打开调度器
+				    }
+				  }
+			   }
            }
         });
         jQuery.extend({
