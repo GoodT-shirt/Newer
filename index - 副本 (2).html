@@ -21,9 +21,12 @@
 </head>
 
 <body>
+     <div>abc</div>
      <script type="text/javascript">
         debugger;
-        jQuery.createCanvas(null, null);                         
+        var div = $("div")[0];
+
+        jQuery.createCanvas(div[0],{text:"good"});                         
     </script>
 </body>
 </html>

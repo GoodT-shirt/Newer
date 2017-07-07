@@ -9,12 +9,21 @@
         jQuery.fn = jQuery.prototype = {
             constructor: jQuery,
 
-            //这是一个构造函数
+
+            //这是一个构造函数,应该将this转换为一个类数组对象
             init: function(selector, context){
                 var results;
 
-                if(typeof selector === "string"){
+                /*this.length = 0;
+                this.add = function(elem){
+                	Array.prototype.push.call(this, elem);
+                };*/
+
+                if(typeof selector === "string"){		//选择器表达式字符串
                     results = jQuery.find(selector, context);
+                    /*for(var i = 0; i < results.length; i++){
+                    	this.add(results[i]);
+                    }*/
                     //存储在属性0上
                     this[0] = results;
                     this.length = results.length;
@@ -23,7 +32,7 @@
                     this[0] = [selector];       //第0个元素是一个数组，数组里的每一个元素都是DOM元素（对象）
                     this.length = 1;
                 }
-                else if(typeof selector === "function"){
+                else if(typeof selector === "function"){//函数
                     //debugger;
                     jQuery.getReady(selector);
                 }
@@ -620,9 +629,19 @@
         });
 
 		jQuery.extend({
-			createCanvas:function(cont,elem){
+			createCanvas:function(elem, cont){
 				var canvas = document.createElement('canvas'), context = canvas.getContext('2d'), elem = elem || document.body, cont = cont || {};
 				canvas.id = 'canvas';
+				//长宽设置要在设置context.font之前
+				if(cont.width)
+					canvas.width = cont.width;
+				else 
+					canvas.width = 600;
+				if(cont.height)
+					canvas.height = cont.height;
+				else
+					canvas.height = 300;
+				
 				if(cont.font)
 					context.font = cont.font;
 				else
@@ -637,14 +656,7 @@
 					context.strokeStyle = cont.strokeStyle;
 				else
 					context.strokeStyle = 'blue';
-				if(cont.width)
-					canvas.width = cont.width;
-				else 
-					canvas.width = 600;
-				if(cont.height)
-					canvas.height = cont.height;
-				else
-					canvas.height = 300;
+				
 
 				if(!cont.text)
 					cont.text = 'Hello Canvas';
