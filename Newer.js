@@ -835,6 +835,48 @@
             }
         });
 
+        //判断一个文档是否是XML文档
+        jQuery.fn.extend({
+            isXML:function(){
+                //debugger;
+                return this[0].ownerDocument || this[0].documentElement.nodeName.toLowerCase() !== "html";
+            },
+            attr:function(name,value){
+            	var element = this[0],translations = {                                    
+		          "for": "htmlFor",
+		          "class": "className",
+		          readonly: "readOnly",
+		          maxlength: "maxLength",
+		          cellspacing: "cellSpacing",
+		          rowspan: "rowSpan",
+		          colspan: "colSpan",
+		          tabindex: "tabIndex",
+		          cellpadding: "cellPadding",
+		          usemap: "useMap",
+		          frameborder: "frameBorder",
+		          contenteditable: "contentEditable"
+		        };
+
+
+				var property = translations[name] || name,
+				propertyExists = typeof element[ property ] !== "undefined";	//是否可通过属性的方式访问
+
+				//传递了值参数，则设置属性
+				if (typeof value !== "undefined") {
+					if (propertyExists) {
+						element[property] = value;
+					}
+					else {
+						element.setAttribute(name,value);
+					}
+				}
+
+				return propertyExists ?
+					element[property] :
+					element.getAttribute(name);
+            }
+        });
+
 
 
 
