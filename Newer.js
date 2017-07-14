@@ -513,7 +513,7 @@
 													          return tags.test(tag) ? all: front + "></" + tag + ">";
 		        });
         	},
-        	//从html字符串生成一个DOM列表
+        	//从html字符串生成一个DOM列表，返回的结果是一个DOM集合
         	getNodes: function(htmlString,doc, fragment) {
         		//元素类型和特殊父容器之间的映射。每个映射都有3个值：节点深度，父元素开启标签和父元素关闭标签
 		        var map = {                                                     
@@ -723,7 +723,7 @@
                 var upper =  function(all,letter){
                     return letter.toUpperCase(); 
                 }  
-                str.replace(/-(\w)/g,upper) 
+                return str.replace(/-(\w)/g,upper);		//返回一个副本，原始str的值不变
             },
             /*
             假设source为"foo=1&foo=2&blah=a&blah=b&foo=3"
@@ -835,14 +835,17 @@
             }
         });
 
-        //判断一个文档是否是XML文档
+
         jQuery.fn.extend({
+        	//判断一个文档是否是XML文档
             isXML:function(){
                 //debugger;
                 return this[0].ownerDocument || this[0].documentElement.nodeName.toLowerCase() !== "html";
             },
+            //特性是指标签中定义的，属性是指DOM元素的属性，属性往往根据特性值创建。一般来说，他们是一一对应的
             attr:function(name,value){
-            	var element = this[0],translations = {                                    
+            	var element = this[0],
+            	translations = {      			//看特性名是否有相应的属性名，按属性访问可以提高性能。                              
 		          "for": "htmlFor",
 		          "class": "className",
 		          readonly: "readOnly",
@@ -858,8 +861,8 @@
 		        };
 
 
-				var property = translations[name] || name,
-				propertyExists = typeof element[ property ] !== "undefined";	//是否可通过属性的方式访问
+				var property = translations[name] || name,						//不在转换表中，说明可以不用转换
+				propertyExists = typeof element[ property ] !== "undefined";	//再判断是否可通过属性的方式访问
 
 				//传递了值参数，则设置属性
 				if (typeof value !== "undefined") {
@@ -867,17 +870,51 @@
 						element[property] = value;
 					}
 					else {
-						element.setAttribute(name,value);
+						element.setAttribute(name,value);		//使用DOM方法，按特性访问
 					}
 				}
 
-				return propertyExists ?
-					element[property] :
-					element.getAttribute(name);
+				//如果访问的是特性action,保险起见使用该方法获取特性值
+				//如果通过属性访问的方式访问这三个属性，返回的将是完整规范的URL
+				if(name === "action" || name === "src" || name === "href"){
+					return element.getAttributeNode(name).nodeValue;		//返回设置的原始值
+				}
+				else{
+					//无论读还是写，最后都返回属性值/特性值
+					return propertyExists ?
+						element[property] :
+						element.getAttribute(name);
+				}
             }
+    
         });
 
+        jQuery.extend({
+        	testForm:function(){
+        		//input元素的id值为id, name值为action
+        		var htmlone = "<form id=\"testForm\" action=\"/\"><input type=\"text\" id=\"id\"/><input type=\"text\" name=\"action\"/></form>";
+        		//input元素的id值为id2, name值为action2
+        		var htmltwo = "<form id=\"testForm\" action=\"/\"><input type=\"text\" id=\"id2\"/><input type=\"text\" name=\"action2\"/></form>";
+            	var b=jQuery.getNodes(htmlone);
+            	//一旦放到DOM树中，b就为空了，可能是为了安全考虑
+            	document.body.appendChild(b[0]);
+            	var form = document.getElementById('testForm');
+            	console.log(form.id);		//将是对第一个<input>元素的引用,打印<input type="text" id="id">
+            	console.log(form.action);	//将是对第二个<input>元素的引用，打印<input type="text" name="action">
 
+            }
+        }); 
+
+        jQuery.fn.extend({
+        	style:function(name,value){
+        		name = jQuery.makeCamel(name);
+        		element = this[0];
+        		if(typeof value !== 'undefined'){
+        			element.style[name] = value;
+        		}
+        		return element.style[name];
+        	}
+        });
 
 
          //为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
