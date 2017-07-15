@@ -906,13 +906,42 @@
         }); 
 
         jQuery.fn.extend({
+        	/*
+        	如果name是height之类的属性，则value必须有px为单位，但如果是如下属性，则不应该有px:
+        	z-index,font-weight,opacity,zoom,line-height
+        	*/
         	style:function(name,value){
+        		//转换为驼峰格式
         		name = jQuery.makeCamel(name);
         		element = this[0];
         		if(typeof value !== 'undefined'){
         			element.style[name] = value;
         		}
         		return element.style[name];
+        	},
+        	//获取元素的高度和宽度
+        	getDimensions:function(){
+				var PROPERTIES = {    
+					display: "block"		//设为block后才可以获取offsetHeight和offsetWidth,但会让元素变得可见    
+					visibility: "hidden",	//使元素变得不可见，但会导致元素所在位置显示一片空白             
+					position: "absolute",   //将元素移出正常的显示流，这样就不会显示一片空白了
+				};
+				var previous = {};      	//用于保存以前的设置，用于后面恢复         
+				var element = this[0];            
+				for (var key in PROPERTIES) {
+					previous[key] = element.style[key];
+					element.style[key] = PROPERTIES[key];     //设置为新的值，用于获取宽度和高度  
+				}
+				//获取的结果
+				var result = {                                
+					width: element.offsetWidth,
+					height: element.offsetHeight
+				};
+				//恢复原先的值
+				for (key in PROPERTIES) {                     
+					element.style[key] = previous[key];
+				}
+				return result;
         	}
         });
 
