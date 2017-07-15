@@ -945,7 +945,7 @@
         	}
         });
 
-
+        var cacheTmpl = {};
         jQuery.extend({
         	globalEval:function(data){
 				data = data.replace(/^\s*|\s*$/g, "");		//去除所有前导和尾部空白字符
@@ -968,6 +968,53 @@
 						jQuery.globalEval($scripts[i].innerHTML);
 					}
 				}
+			},
+			/*
+				data是一个对象，包含希望填充的模板变量的名称和值
+			*/
+			tmpl:function(str, data){
+				//debugger;
+				//要对函数体进行缓存
+				var fn = !/\W/.test(str) ?//是否含有非单词字符，如<%
+				cacheTmpl[str] = cacheTmpl[str] ||//str此时是一个索引, ||的优先级比=要高
+				/*
+				这里有一个递归调用，所以会进行缓存.
+				id为str的标签下藏有模板,然后再递归调用tmpl函数，动态生成一个页面生成器
+				假如str为"Hello,<%=name%>!"
+				则生成的函数为:
+				function(obj){
+					var p=[];
+					with(obj){
+						p.push('Hello,', name, '!');
+					}
+					return p.join('');
+				}
+				如果传入的obj为
+				obj={
+					name:"world"
+				}
+				则函数将返回Hello, world!
+				*/
+				this.tmpl(document.getElementById(str).innerHTML) :
+				//动态构建一个函数，并且函数体是随str变化的
+				new Function("obj",
+				"var p=[];" +
+
+				//push('Hello,',name,'!'),因为with的帮助，name实际引用的是obj.name即data的name
+				"with(obj){p.push('" +
+
+				//把模板转化为纯属JS（去掉<%等符号，但保留标点符号和变量名，变量名将被data中的替换掉)
+				str
+				.replace(/[\r\t\n]/g, " ")
+				.split("<%").join("\t")
+				.replace(/((^|%>)[^\t]*)'/g, "$1\r")
+				.replace(/\t=(.*?)%>/g, "',$1,'")
+				.split("\t").join("');")
+				.split("%>").join("p.push('")
+				.split("\r").join("\\'")
+				+ "');}return p.join('');");
+
+				return data ? fn(data) : fn;
 			}
         });
          //为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序

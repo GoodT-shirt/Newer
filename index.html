@@ -11,19 +11,22 @@
 
 <body>
     <script type="text/javascript">
-        $(function(){
-            debugger;
-            /*
-                execXScript可以将JAVA,C转换为JS程序，并动态求值
-            */
-            jQuery.execXScript("onload");  
-        });
-    </script>
-    <script type="x/onload">
-        /*
-            x表示自定义脚本, onload是脚本类型，可以是JAVA，C编写的程序
-        */
-        console.log("executed on page load");
+        debugger;
+        //传入了第二个参数，直接返回替换后的结果(页面)
+        var str = jQuery.tmpl("Hello, <%= name %>!", {name:"world"});
+        if(str == "Hello, world!")
+            console.log("Do simple variable inclusion.");
+
+
+        var str = jQuery.tmpl("Hello, <%= name %>!", {name:"world2"});
+        if(str == "Hello, world2!")
+            console.log("2Do simple variable inclusion.");
+
+        //没有传入第二个参数，返回的是模板系统（页面生成器)
+        var hello = jQuery.tmpl("Hello, <%= name %>!");
+        if(hello({name:"world"}) == "Hello, world!")
+          console.log("Use a pre-compiled template.");
+
     </script>
 </body>
 </html>
