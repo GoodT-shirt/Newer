@@ -922,7 +922,7 @@
         	//获取元素的高度和宽度
         	getDimensions:function(){
 				var PROPERTIES = {    
-					display: "block"		//设为block后才可以获取offsetHeight和offsetWidth,但会让元素变得可见    
+					display: "block",		//设为block后才可以获取offsetHeight和offsetWidth,但会让元素变得可见    
 					visibility: "hidden",	//使元素变得不可见，但会导致元素所在位置显示一片空白             
 					position: "absolute",   //将元素移出正常的显示流，这样就不会显示一片空白了
 				};
@@ -946,6 +946,30 @@
         });
 
 
+        jQuery.extend({
+        	globalEval:function(data){
+				data = data.replace(/^\s*|\s*$/g, "");		//去除所有前导和尾部空白字符
+				if (data) {
+					//放在<head></head>的最后或</body>后
+					var head = document.getElementsByTagName("head")[0] || document.documentElement,
+					script = document.createElement("script");       
+
+					script.type = "text/javascript";
+					script.text = data;		//放入要求值的字符串
+
+					head.appendChild(script);   //将<script>附加到DOM上，将执行其中的代码，这样data就是在全局作用域中被执行                         
+					head.removeChild(script);       
+				}
+			},
+			execXScript:function(type){
+				var $scripts = jQuery("script");
+				for(var i = 0; i < $scripts.length; i++){
+					if($scripts[i].type == "x/" + type){
+						jQuery.globalEval($scripts[i].innerHTML);
+					}
+				}
+			}
+        });
          //为就绪事件增加监听程序，当DOM完全加载完毕时会回来执行这里的事件处理程序
     	jQuery.watFormDomReady();
         return jQuery;

@@ -6,19 +6,24 @@
     </style>
 
     <script src="Newer.js"></script>
-    <style type="text/css">
-        #whirlyThing { display: none; };
-    </style>
+
 </head>
 
 <body>
-    <div style="color:red;font-size:10px;background-color:#eee;"></div>
-
-    <script>
-
-    	debugger
-    	console.log($("div").style('color'));
-    	console.log($("div").style('font-size'));
+    <script type="text/javascript">
+        $(function(){
+            debugger;
+            /*
+                execXScript可以将JAVA,C转换为JS程序，并动态求值
+            */
+            jQuery.execXScript("onload");  
+        });
+    </script>
+    <script type="x/onload">
+        /*
+            x表示自定义脚本, onload是脚本类型，可以是JAVA，C编写的程序
+        */
+        console.log("executed on page load");
     </script>
 </body>
 </html>
